@@ -44,6 +44,72 @@ class GLM {
 	}
 
 	/**
+	 * Rotates a matrix by the quaternion vector
+	 * @param  ?m    A matrix to apply the transformation on. If `m == null`,
+	 *               an identity matrix will be used.
+	 * @param rotation A vector describing the rotation
+	 */
+	public static function rotation(?m:Mat4, rotation:Quat):Mat4 {
+		var xs:Float = rotation.x * 2;
+		var ys:Float = rotation.y * 2;
+		var zs:Float = rotation.z * 2;
+
+		var wx:Float = rotation.w * xs;
+		var wy:Float = rotation.w * ys;
+		var wz:Float = rotation.w * zs;
+
+		var xx:Float = rotation.x * xs;
+		var xy:Float = rotation.x * ys;
+		var xz:Float = rotation.x * zs;
+
+		var yy:Float = rotation.y * ys;
+		var yz:Float = rotation.y * zs;
+
+		var zz:Float = rotation.z * zs;
+
+		var t:Mat4 = Mat4.fromRows(
+			new Vec4(1 - (yy + zz), xy - wz, xz + wy, 0),
+			new Vec4(xy + wz, 1 - (xx + zz), yz - wx, 0),
+			new Vec4(xz - wy, yz + wx, 1 - (xx + yy), 0),
+			new Vec4(0, 0, 0, 1)
+		);
+
+		if(m == null) return t;
+		return t * m;
+	}
+	
+	public static function lookAt(eye:Vec3, center:Vec3, up:Vec3):Mat4 {
+		var f:Vec3 = (center - eye).normalize();
+		
+		var s:Vec3 = Vec3.cross(f, up).normalize();
+		var u:Vec3 = Vec3.cross(s, f);
+		
+		var result:Mat4 = new Mat4(1.0);
+		
+		result[0][0] = s.x;
+		result[0][1] = s.y;
+		result[0][2] = s.z;
+		
+		result[1][0] = u.x;
+		result[1][1] = u.y;
+		result[1][2] = u.z;
+		
+		result[2][0] = -f.x;
+		result[2][1] = -f.y;
+		result[2][2] = -f.z;
+		
+		result[3][0] = 0.0;
+		result[3][1] = 0.0;
+		result[3][2] = 0.0;
+		
+		result[0][3] =-Vec3.dot(s, eye);
+		result[1][3] =-Vec3.dot(u, eye);
+		result[2][3] = Vec3.dot(f, eye);
+		
+		return result;
+	}
+
+	/**
 	 * Constructs a quaternion which represents a rotation of `angle`
 	 * around the axis `axis`.
 	 * @param  axis  The axis to rotate about
